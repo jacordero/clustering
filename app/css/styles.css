@@ -1,0 +1,47 @@
+#page-wrap{
+  width: 960px;
+  margin: 0 auto;
+}
+
+h1 {
+  text-align: center;
+  /**background-color: #84AFC7;**/
+  margin-top: 15px;
+  margin-bottom: 15px;
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+
+#kmeans-board {
+  height: 400px;
+  border: 1px solid black;
+  /**background-color: #3FE33A;**/
+}
+
+#controls {
+  margin-bottom: 10px;
+  margin-top: 10px;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  /**background-color: #C35DE7;**/
+  /**clear: both;**/
+}
+
+.left-column{
+  float: left;
+  width: 33%
+}
+
+.center-column{
+  float: left;
+  width: 33%
+}
+
+.right-column{
+  float: left;
+  width: 33%;
+}
+
+.right-column button{
+  float: right;
+}
