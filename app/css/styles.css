@@ -14,6 +14,8 @@ h1 {
 
 #kmeans-board {
   height: 400px;
+  width: 500px;
+  margin: 0px auto;
   border: 1px solid black;
   /**background-color: #3FE33A;**/
 }
