@@ -45,5 +45,6 @@ h1 {
 }
 
 .right-column button{
-  float: right;
+  margin-left: 40px;
+  margin-right: 40px;
 }

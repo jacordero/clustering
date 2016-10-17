@@ -1,4 +1,4 @@
-// function used to start kmeans simmulation
+// function used to start kmeans simulation
 
 var radius = 5;
 var width = 500;
@@ -7,7 +7,15 @@ var colors = ["#641e16", "#512e5f", "#154360", "#0e6251", "#145a32", " #7d6608",
 
 var iterations;
 
+// variable used to manage the animation timer
+var interval;
+
+function stopKMeans(){
+    clearInterval(interval);
+}
+
 function startKMeans(){
+  clearInterval(interval);
 
   iterations = 10;
   // validate number of cluster restriction
@@ -26,7 +34,7 @@ function startKMeans(){
   //console.log(centroids);
   plotPoints(arrayOfPoints.concat(centroids));
 
-  var interval = setInterval(function(){
+  interval = setInterval(function(){
       if (iterations <= 0){
         clearInterval(interval);
       }
