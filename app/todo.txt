@@ -1,5 +1,5 @@
-1) Implement a cluster homogeneity evaluation
-2) Change cluster coloring
+1) Refactor the code to make it readable and maintainable
+2) Implement a cluster homogeneity evaluation
 3) Change points to figures according to the cluster they belong to
 4) Implement a centroid tracking movement animation
-5) Refactor the code to make it readable and maintainable
+5) Add button to clear the animation

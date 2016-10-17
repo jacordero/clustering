@@ -3,7 +3,23 @@
 var radius = 5;
 var width = 500;
 var height = 400;
-var colors = ["#641e16", "#512e5f", "#154360", "#0e6251", "#145a32", " #7d6608", "#784212", " #7b7d7d", "#4d5656", "#1b2631"];
+var minClusters = 3;
+var maxClusters = 12;
+var intervalDuration = 1500;
+var colors;
+
+var colorPalette = [
+    ['#e41a1c','#377eb8','#4daf4a'], // three colors
+    ['#e41a1c','#377eb8','#4daf4a','#984ea3'], // four colors
+    ['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00'], // five colors
+    ['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33'], // six colors
+    ['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33','#a65628'], // seven colors
+    ['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33','#a65628','#f781bf'], // eight colors
+    ['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33','#a65628','#f781bf','#999999'], // nine colors
+    ['#a6cee3','#1f78b4','#b2df8a','#33a02c','#fb9a99','#e31a1c','#fdbf6f','#ff7f00','#cab2d6','#6a3d9a'], // ten colors
+    ['#a6cee3','#1f78b4','#b2df8a','#33a02c','#fb9a99','#e31a1c','#fdbf6f','#ff7f00','#cab2d6','#6a3d9a','#ffff99'], // eleven colors
+    ['#a6cee3','#1f78b4','#b2df8a','#33a02c','#fb9a99','#e31a1c','#fdbf6f','#ff7f00','#cab2d6','#6a3d9a','#ffff99','#b15928'] // twelve colors
+];
 
 var iterations;
 
@@ -20,10 +36,20 @@ function startKMeans(){
   iterations = 10;
   // validate number of cluster restriction
   var numberOfClusters = parseInt(document.getElementById("numberOfClusters").value);
-  if (numberOfClusters > colors.length){
-    alert("Number of clusters must be lesser or equal to 10");
-    return;
-  }
+
+   if (numberOfClusters < minClusters){
+      alert("Number of clusters must be greater or equal to " + minClusters.toString());
+      return;
+   }
+
+   if (numberOfClusters > maxClusters){
+       alert("Number of clusters must be less than or equal to " + maxClusters.toString());
+       return;
+   }
+
+   // select the colors to use in the visualization
+   colors = colorPalette[numberOfClusters - 3];
+
   //console.log(numberOfClusters);
 
   var numberOfPoints = parseInt(document.getElementById("numberOfPoints").value);
@@ -43,9 +69,8 @@ function startKMeans(){
       centroids = updateCentroids(arrayOfPoints, assignments, numberOfClusters);
       plotPoints(arrayOfPoints.concat(centroids));
       iterations -= 1;
-    }, 5000);
+    }, intervalDuration);
 }
-
 
 
 function assignCentroids(points, centroids){
@@ -128,7 +153,7 @@ function generateRandomPoints(min_x, max_x, min_y, max_y, size){
 function generateRandomCentroids(min_x, max_x, min_y, max_y, size){
   var centroids = [];
   for (i = 0; i < size; i++){
-    var centroid = {'x_axis': getRandomInt(min_x, max_x), 'y_axis': getRandomInt(min_y, max_y), 'radius':8,  'color_value': selectColor(i + 1, size)}
+    var centroid = {'x_axis': getRandomInt(min_x, max_x), 'y_axis': getRandomInt(min_y, max_y), 'radius':8,  'color_value': colors[i]}
     centroids.push(centroid);
   }
   return centroids;
@@ -137,16 +162,11 @@ function generateRandomCentroids(min_x, max_x, min_y, max_y, size){
 function generateEmptyCentroids(size){
   var centroids = [];
   for (i = 0; i < size; i++){
-    var centroid = {'x_axis': 0.0, 'y_axis': 0.0, 'radius':8,  'color_value': selectColor(i + 1, size)}
+    var centroid = {'x_axis': 0.0, 'y_axis': 0.0, 'radius':8,  'color_value': colors[i]}
     centroids.push(centroid);
   }
   //console.log(centroids);
   return centroids;
-}
-
-function selectColor(index, max_index){
-  //console.log(index % max_index);
-  return colors[index % max_index];
 }
 
 
