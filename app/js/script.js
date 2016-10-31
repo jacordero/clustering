@@ -32,8 +32,31 @@ function arrayOfZeros(size){
     return zeros;
 }
 
+// get random number from min to max (inclusive)
 function getRandomInt(min, max){
     return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function sampleWeightedArray(weightedArray){
+  var cdn = [];
+  var sum = 0.0;
+  for (i = 0; i < weightedArray.length; i++){
+    sum += weightedArray[i];
+    cdn.push(sum);
+  }
+
+  var randomValue = Math.random();
+  var index = cdn.length - 1;
+  for (i = 0; i < cdn.length; i++){
+    if (randomValue < cdn[i]){
+      index = i;
+      break;
+    }
+  }
+  var lastValue = cdn[cdn.length - 1];
+  console.log("cdn last: " + lastValue.toString());
+  console.log("cdn index: " + index.toString());
+  return index;
 }
 
 function generateRandomPoints(min_x, max_x, min_y, max_y, size){
@@ -45,7 +68,72 @@ function generateRandomPoints(min_x, max_x, min_y, max_y, size){
     return points;
 }
 
-function generateRandomCentroids(min_x, max_x, min_y, max_y, size){
+function initializeCentroids(data, min_x, max_x, min_y, max_y, size, initMethod){
+  console.log(initMethod);
+  if (initMethod == "smart"){
+    console.log("smartInitialization");
+    return smartInitialization(data, size);
+  }
+  return randomInitialization(min_x, max_x, min_y, max_y, size);
+}
+
+function smartInitialization(data, size){
+  // Choose first centroid uniformly at random from data points
+  var centroids = []
+  var dataPosition = getRandomInt(0, data.length - 1);
+  var selectedPoint = data[dataPosition];
+  var newCentroid = {
+    'x_axis': selectedPoint.x_axis,
+    'y_axis': selectedPoint.y_axis,
+    'radius': 8,
+    'color_value': colors[0]
+  }
+  newCentroid.radius = 8;
+  centroids.push(newCentroid);
+
+  for (k = 1; k < size; k++){
+    // for each obs x, compute distance d(x) to nearest cluster center
+    var distances = [];
+    for (i = 0; i < data.length; i++){
+      distance = computeDistance(data[i], centroids[0]);
+      for (j = 1; j < centroids.length; j++){
+        var newDistance = computeDistance(data[i], centroids[j]);
+        if (newDistance < distances[i]){
+          distance = newDistance;
+        }
+      }
+      distances.push(distance);
+    }
+
+    // choose new centroid from amongst data points, with probability of x being
+    // chosen proportional to d(x)**2
+    sum_squared_distances = 0.0;
+    for (i = 0; i < distances.length; i++){
+      sum_squared_distances += (distances[i] * distances[i]);
+    }
+
+    var probs = [];
+    for (i = 0; i < distances.length; i++){
+      probs.push((distances[i] * distances[i]) / sum_squared_distances);
+    }
+
+    var index = sampleWeightedArray(probs);
+    selectedPoint = data[index];
+    newCentroid = {
+      'x_axis': selectedPoint.x_axis,
+      'y_axis': selectedPoint.y_axis,
+      'radius': 8,
+      'color_value': colors[k]
+    }
+    centroids.push(newCentroid);
+  }
+
+  //console.log(centroids);
+  return centroids;
+}
+
+
+function randomInitialization(min_x, max_x, min_y, max_y, size){
     var centroids = [];
     for (i = 0; i < size; i++){
         var centroid = {'x_axis': getRandomInt(min_x, max_x), 'y_axis': getRandomInt(min_y, max_y), 'radius':8,  'color_value': colors[i]}
@@ -128,8 +216,8 @@ function moveCentroids (data, assignments, numberOfCentroids){
 }
 
 // function used to start kmeans simulation
-function runKMeans(data, numberOfClusters, visualizer, blackboardElement, iterations, verbose){
-  var centroids = generateRandomCentroids(canvasInfo.radius, canvasInfo.width - canvasInfo.radius, canvasInfo.radius, canvasInfo.height - canvasInfo.radius, numberOfClusters);
+function runKMeans(data, numberOfClusters, visualizer, blackboardElement, iterations, initMethod, verbose){
+  console.log(centroids);
   visualizer.draw(data.concat(centroids), blackboardElement);
   var lastAssignments = [];
 
@@ -217,8 +305,20 @@ function startKMeans(){
   //console.log(numberOfClusters);
 
   var numberOfPoints = parseInt(document.getElementById("numberOfPoints").value);
+  if (numberOfPoints < numberOfClusters){
+    alert("Number of points must be greater or equal to the number of clusters");
+    return;
+  }
+
+  var initializationMethod = document.getElementById("initializationMethod").value;
+  console.log(initializationMethod);
+  if (initializationMethod != "smart" && initializationMethod != "random"){
+    alert("The only initialization methods allowed  are smart and random");
+    return;
+  }
+
   var data = generateRandomPoints(canvasInfo.radius, canvasInfo.width - canvasInfo.radius, canvasInfo.radius, canvasInfo.height - canvasInfo.radius, numberOfPoints);
 
     var visualizer = Object.create(Visualizer);
-    runKMeans(data, numberOfClusters, visualizer, "#kmeans-board", clusteringInfo.maxIterations, true)
+    runKMeans(data, numberOfClusters, visualizer, "#kmeans-board", clusteringInfo.maxIterations, initializationMethod, true);
 }

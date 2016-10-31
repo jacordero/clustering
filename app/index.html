@@ -16,13 +16,20 @@
     <div id="kmeans-board"></div>
 
     <div id="controls">
-        <div class="left-column">
+        <div class="first-column">
           Number of points: <input type="text" id="numberOfPoints" name="points" value="300">
         </div>
-        <div class="center-column">
+        <div class="second-column">
           Number of clusters: <input type="text" id="numberOfClusters" name="clusters" value="5">
         </div>
-        <div class="right-column">
+        <div class="third-column">
+          <label for="initialization-method">Initialization method</label>
+          <select id="initializationMethod" name="initialization-method">
+            <option value="random">Random</option>
+            <option value="smart">Smart</option>
+          </select>
+        </div>
+        <div class="fourth-column">
           <button onclick="startKMeans()">Start</button>
           <button onclick="stopKMeans()">Stop</button>
         </div>

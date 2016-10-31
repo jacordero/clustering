@@ -1,5 +1,5 @@
 1) Implement a cluster homogeneity evaluation
-2) Implement a smart initialization algorithm
-3) Change points to figures according to the cluster they belong to
-4) Implement a centroid tracking movement animation
+2) Implement synthetic data generator
+3) Implement a centroid tracking movement animation
+4) Change points to figures according to the cluster they belong to
 5) Add button to clear the animation
