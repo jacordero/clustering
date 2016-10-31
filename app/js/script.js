@@ -1,3 +1,26 @@
+// object that helps with the data visualization process
+var Visualizer = {
+
+    draw: function (data, blackboardElementId){
+        d3.select("svg").remove();
+
+        var svgContainer = d3.select(blackboardElementId).append("svg")
+            .attr("width", canvasInfo.width)
+            .attr("height", canvasInfo.height);
+
+        var circles = svgContainer.selectAll("circle")
+            .data(data)
+            .enter()
+            .append("circle");
+
+        var circleAttributes = circles
+            .attr("cx", function (d) { return d.x_axis; })
+            .attr("cy", function (d) { return d.y_axis; })
+            .attr("r", function (d) {return d.radius})
+            .style("fill", function(d) { return d.color_value});
+    }
+}
+
 /**
  Need to protect against division by zero and integer overflow
  **/
@@ -41,114 +64,112 @@ function generateEmptyCentroids(size){
     return centroids;
 }
 
-// object that helps with the data visualization process
-var Visualizer = {
+function arraysAreEquals(firstArray, secondArray){
+  if (firstArray.length != secondArray.length){
+    return false;
+  }
 
-    draw: function (data, blackboardElementId){
-        d3.select("svg").remove();
-
-        var svgContainer = d3.select(blackboardElementId).append("svg")
-            .attr("width", width)
-            .attr("height", height);
-
-        var circles = svgContainer.selectAll("circle")
-            .data(data)
-            .enter()
-            .append("circle");
-
-        var circleAttributes = circles
-            .attr("cx", function (d) { return d.x_axis; })
-            .attr("cy", function (d) { return d.y_axis; })
-            .attr("r", function (d) {return d.radius})
-            .style("fill", function(d) { return d.color_value});
+  for (i = 0; i < firstArray.length; i++){
+    if (firstArray[i] != secondArray[i]){
+      return false;
     }
+  }
+
+  console.log("arrays are equals");
+  return true;
 }
 
-var KMeans = {
 
-    iterations: 10,
+function computeDistance (point1, point2){
+  return Math.sqrt(Math.pow(point1.x_axis - point2.x_axis, 2) + Math.pow(point1.y_axis - point2.y_axis, 2));
+}
 
-    computeDistance : function(point1, point2){
-        return Math.sqrt(Math.pow(point1.x_axis - point2.x_axis, 2) + Math.pow(point1.y_axis - point2.y_axis, 2))
-    },
+function computeCentroids (data, initialCentroids){
+  var assignedCentroids = []
+  for (i = 0; i < data.length; i++){
+      // iterate per centroids
+      centroid_index = 0
+      centroid_distance = computeDistance(data[i], initialCentroids[0]);
+      //console.log("centroid_distance");
+      //console.log(centroid_distance);
+      for (j = 1; j < initialCentroids.length; j++){
+          var distance = computeDistance(data[i], initialCentroids[j]);
+          //console.log("distance");
+          //console.log(distance);
+          if (distance < centroid_distance){
+              centroid_index = j
+              centroid_distance = distance;
+          }
+      }
+      data[i].color_value = initialCentroids[centroid_index].color_value;
+      assignedCentroids.push(centroid_index);
+  }
+  return [assignedCentroids, data];
+}
 
-    assignCentroids : function (data, initialCentroids){
-        var self = this;
-        var assignedCentroids = []
-        for (i = 0; i < data.length; i++){
-            // iterate per centroids
-            centroid_index = 0
-            centroid_distance = self.computeDistance(data[i], initialCentroids[0]);
-            //console.log("centroid_distance");
-            //console.log(centroid_distance);
-            for (j = 1; j < initialCentroids.length; j++){
-                var distance = self.computeDistance(data[i], initialCentroids[j]);
-                //console.log("distance");
-                //console.log(distance);
-                if (distance < centroid_distance){
-                    centroid_index = j
-                    centroid_distance = distance;
-                }
-            }
-            data[i].color_value = initialCentroids[centroid_index].color_value;
-            assignedCentroids.push(centroid_index);
-        }
-        return [assignedCentroids, data];
-    },
+function moveCentroids (data, assignments, numberOfCentroids){
+  var newCentroids = generateEmptyCentroids(numberOfCentroids);
+  //console.log(newCentroids);
+  var pointsPerCentroid = arrayOfZeros(numberOfCentroids);
+  for (i = 0; i < data.length; i++){
+      var currentCentroid = newCentroids[assignments[i]];
+      var point = data[i];
+      //console.log(point);
+      currentCentroid.x_axis += point.x_axis;
+      currentCentroid.y_axis += point.y_axis;
+      pointsPerCentroid[assignments[i]] += 1.0;
+  }
 
-    updateCentroids : function (data, assignments, numberOfCentroids){
-        //console.log("number of centroids");
-        //console.log(numberOfCentroids);
-        var newCentroids = generateEmptyCentroids(numberOfCentroids);
-        //console.log(newCentroids);
-        var pointsPerCentroid = arrayOfZeros(numberOfCentroids);
-        for (i = 0; i < data.length; i++){
-            var currentCentroid = newCentroids[assignments[i]];
-            var point = data[i];
-            //console.log(currentCentroid);
-            //console.log(point);
-            currentCentroid.x_axis += point.x_axis;
-            currentCentroid.y_axis += point.y_axis;
-            pointsPerCentroid[assignments[i]] += 1.0;
-        }
-
-        for (i = 0; i < newCentroids.length; i++){
-            newCentroids[i].x_axis /= pointsPerCentroid[i];
-            newCentroids[i].y_axis /= pointsPerCentroid[i];
-        }
-        return newCentroids;
-    },
-
-    run : function(data, numberOfClusters, visualizer, blackboardElement, interval, verbose){
-        var centroids = generateRandomCentroids(radius, width - radius, radius, height - radius, numberOfClusters);
-        //console.log(centroids);
-        visualizer.draw(data.concat(centroids), blackboardElement);
-        var self = this;
-
-        interval = setInterval(function(){
-            if (self.iterations <= 0){
-                clearInterval(interval);
-                return;
-            }
-
-            [assignments, data] = self.assignCentroids(data, centroids);
-            centroids = self.updateCentroids(data, assignments, numberOfClusters);
-            visualizer.draw(data.concat(centroids), blackboardElement);
-            self.iterations -= 1;
-
-            if (verbose){
-                console.log("remaining iterations: " + self.iterations.toString());
-            }
-        }, intervalDuration);
-    }
+  for (i = 0; i < newCentroids.length; i++){
+      newCentroids[i].x_axis /= pointsPerCentroid[i];
+      newCentroids[i].y_axis /= pointsPerCentroid[i];
+  }
+  return newCentroids;
 }
 
 // function used to start kmeans simulation
-var radius = 5;
-var width = 500;
-var height = 400;
-var minClusters = 3;
-var maxClusters = 12;
+function runKMeans(data, numberOfClusters, visualizer, blackboardElement, iterations, verbose){
+  var centroids = generateRandomCentroids(canvasInfo.radius, canvasInfo.width - canvasInfo.radius, canvasInfo.radius, canvasInfo.height - canvasInfo.radius, numberOfClusters);
+  visualizer.draw(data.concat(centroids), blackboardElement);
+  var lastAssignments = [];
+
+  interval = setInterval(function(){
+      if (iterations <= 0){
+          clearInterval(interval);
+          return;
+      }
+
+      [assignments, data] = computeCentroids(data, centroids, numberOfClusters);
+      console.log(assignments);
+      centroids = moveCentroids(data, assignments, numberOfClusters);
+      visualizer.draw(data.concat(centroids), blackboardElement);
+
+      if (lastAssignments.length > 0 && arraysAreEquals(lastAssignments, assignments)){
+            clearInterval(interval);
+            console.log("None of the cluster assignments changed, stopping the algorithm");
+            return;
+      }
+
+      lastAssignments = assignments;
+      iterations -= 1;
+      if (verbose){
+          console.log("remaining iterations: " + iterations.toString());
+      }
+  }, intervalDuration);
+}
+
+var canvasInfo = {
+  radius: 5,
+  width: 500,
+  height: 400
+}
+
+var clusteringInfo = {
+  minClusters: 3,
+  maxClusters: 12,
+  maxIterations: 50
+}
+
 var intervalDuration = 1500;
 var colors;
 
@@ -181,13 +202,13 @@ function startKMeans(){
   // validate number of cluster restriction
   var numberOfClusters = parseInt(document.getElementById("numberOfClusters").value);
 
-   if (numberOfClusters < minClusters){
-      alert("Number of clusters must be greater or equal to " + minClusters.toString());
+   if (numberOfClusters < clusteringInfo.minClusters){
+      alert("Number of clusters must be greater or equal to " + clusteringInfo.minClusters.toString());
       return;
    }
 
-   if (numberOfClusters > maxClusters){
-       alert("Number of clusters must be less than or equal to " + maxClusters.toString());
+   if (numberOfClusters > clusteringInfo.maxClusters){
+       alert("Number of clusters must be less than or equal to " + clusteringInfo.maxClusters.toString());
        return;
    }
 
@@ -196,14 +217,8 @@ function startKMeans(){
   //console.log(numberOfClusters);
 
   var numberOfPoints = parseInt(document.getElementById("numberOfPoints").value);
-  var data = generateRandomPoints(radius, width - radius, radius, height - radius, numberOfPoints);
+  var data = generateRandomPoints(canvasInfo.radius, canvasInfo.width - canvasInfo.radius, canvasInfo.radius, canvasInfo.height - canvasInfo.radius, numberOfPoints);
 
     var visualizer = Object.create(Visualizer);
-    var kmeans = Object.create(KMeans);
-    kmeans.run(data, numberOfClusters, visualizer, '#kmeans-board', interval, true);
+    runKMeans(data, numberOfClusters, visualizer, "#kmeans-board", clusteringInfo.maxIterations, true)
 }
-
-
-
-
-
